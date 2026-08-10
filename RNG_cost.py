@@ -11,7 +11,7 @@ MJ_PER_KG_CH4 = 55.6       # 1 kg CH4 = 55.6 MJ
 """ An assumption of 1 kg CH4 = 55.6 MJ, which is obtained from El Abbadi et al., preprint . """
 
 # Loading flow data in m3/d from ad_data.csv 
-df = pd.read_csv(r'C:\Users\johns\OneDrive\Documents\JJE\RS\biogas-upgrading-project\clean-data\ad_data.csv')
+df = pd.read_csv(r'C:\Users\jjohnson316\OneDrive - University of Iowa\Research\codes\clean-data\ad_data.csv')
 flow_data = df['flow_m3_per_day'].values
 #print(flow_data)
 
@@ -87,16 +87,44 @@ print("Unit Capital Cost for membrane technology($/mmBtu/yr) = ",uncc1)
 
 # Calculating annualized capital cost for membrane technology
 acc1 = crf1*uncc1
-print("Annualized Capital Cost for membrane technology($/mmBtu)", acc1)
+print("Annualized Capital Cost for membrane technology($/mmBtu) = ", acc1)
 
 # Calculating annualized O&M cost for membrane technology
 aomc1 = o_m_cost/rng_flow1
-print("Annualized O&M Cost for membrane technology($/mmBtu)", aomc1)
+print("Annualized O&M Cost for membrane technology($/mmBtu) = ", aomc1)
 
 
 """                               Energy consumption of technologies                                       
 For membrane technology, it's energy consumption for upgrading biogas is 0.3kWh/m3(Makaruk etal., 2010).
 To calculate the energy used by each facility assuming they all use membrane technology, biogas prodution in kgCH4/h
 needs to be converted to m3/h. Assuming biogas at all facilities is been produced at 25 degrees celcius and 1atm,
-then biogas HHV at these conditions is 890.3 KJ/moleCH4(NREL,2010).
+then biogas HHV at these conditions is 55.6MJ/kgCH4 (El Abbadi et al., preprint).
+
+Converting kgCH4/h to m3/h, HHV in MJ/kgCH4 is needed in MJ/m3. The density of CH4 at 25 degrees celcius(298K) and 1atm 
+is required given that molar mass(M) of CH4 is 16g/mol and an ideal gas constant(R) of 0.0821L.atm/mol.K
 """
+# Calculating the the density of CH4 at 25 degrees celcius(298K) and 1atm using the ideal gas law PV=nRT
+# From the ideal gas law and molar mass of CH4, density(p) of CH4 at these conditions is given by,
+# p = PM/RT
+P = 1 #atm
+T = 298 #K
+R = 0.0821 #L.atm/mol.K
+M = 16 #g/mol
+p = (P*M)/(R*T)
+print("Density of CH4(kg/m3) = ",p)
+
+# Converting HHV in MJ/kgCH4 to MJ/m3
+HHV1 = 55.6 #MJ/KgCH4
+HHV2 = HHV1*p
+print("HHV(MJ/m3) = ", HHV2)
+
+# Calculating biogas production in m3/h
+biogas_gen1 = (biogas_gen*HHV1)/HHV2
+print("Biogas generation(m3/h) = ",biogas_gen1)
+
+# Calculating biogas production in m3/yr for membrane technology
+def biogas_prod_yr(opt):
+   return biogas_prod1
+biogas_prod1 = 8497.2 * biogas_prod
+
+print("Biogas production(m3/yr) = ",biogas_prod1)
