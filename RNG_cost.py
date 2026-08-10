@@ -11,8 +11,11 @@ MJ_PER_KG_CH4 = 55.6       # 1 kg CH4 = 55.6 MJ
 """ An assumption of 1 kg CH4 = 55.6 MJ, which is obtained from El Abbadi et al., preprint . """
 
 # Loading flow data in m3/d from ad_data.csv 
-df = pd.read_csv(r'C:\Users\jjohnson316\OneDrive - University of Iowa\Research\codes\clean-data\ad_data.csv')
-flow_data = df['flow_m3_per_day'].values
+#df = pd.read_csv(r'C:\Users\jjohnson316\OneDrive - University of Iowa\Research\codes\clean-data\ad_data.csv')
+df = pd.read_csv(r'C:\Users\johns\OneDrive\Documents\JJE\RS\biogas-upgrading-project\clean-data\ad_data.csv')
+# C:\Users\johns\OneDrive\Documents\JJE\RS\biogas-upgrading-project\clean-data
+# flow_data = df['flow_m3_per_day'].values
+flow_data = df['flow_m3_per_day'].values[0]
 #print(flow_data)
 
 # Calculating biogas generation in kgCH4/hr
@@ -78,7 +81,7 @@ A unit capital cost in $/(mmBtu/yr) is also needed to annualize the capital cost
 def crf_cal(t,wacc):
    return wacc/(1-(1+wacc)**-t)
 
-crf1 = crf_cal(10,0.1)
+crf1 = crf_cal(10,0.1)#crfcal
 print("CRF for membrane technology = ",crf1)
 
 # Calculating unit capital cost (uncc) for membrane technology
@@ -123,8 +126,11 @@ biogas_gen1 = (biogas_gen*HHV1)/HHV2
 print("Biogas generation(m3/h) = ",biogas_gen1)
 
 # Calculating biogas production in m3/yr for membrane technology
-def biogas_prod_yr(opt):
+def biogas_prod_yr(opt,biogas_prod):
+   biogas_prod1 = biogas_prod_yr(8497.2*biogas_prod)
    return biogas_prod1
-biogas_prod1 = 8497.2 * biogas_prod
+
+
+
 
 print("Biogas production(m3/yr) = ",biogas_prod1)
