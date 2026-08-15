@@ -4,133 +4,91 @@ import numpy as np
 from functools import lru_cache
 from scipy import stats
 
-MMBTU_TO_MJ   = 1055.06    # 1 MMBtu = 1,055.06 MJ 
-""" Conversion factor for MMBtu to MJ i.e 1 MMBtu = 1,055.06 MJ """
+# Global Variables
 
-MJ_PER_KG_CH4 = 55.6       # 1 kg CH4 = 55.6 MJ
-""" An assumption of 1 kg CH4 = 55.6 MJ, which is obtained from El Abbadi et al., preprint . """
+MMBTU_TO_MJ = 1055.06 # 1mmBtu = 1055.06MJ
+HHV1 = 55.6 # MJ/KgCH4 (El Abbadi, Preprint)
+cf = 8497.2 # Capacity Factor(cf). Assuming membrane technology, this is its capacity factor in hours
+t = 10 # lifetime of membrane technology in years
+wacc = 0.1 # WACC is the Weighted Average Cost of Capital (WACC). A 10% WACC is assumed.
+
+
 
 # Loading flow data in m3/d from ad_data.csv 
-#df = pd.read_csv(r'C:\Users\jjohnson316\OneDrive - University of Iowa\Research\codes\clean-data\ad_data.csv')
-df = pd.read_csv(r'C:\Users\johns\OneDrive\Documents\JJE\RS\biogas-upgrading-project\clean-data\ad_data.csv')
+df = pd.read_csv(r'C:\Users\jjohnson316\OneDrive - University of Iowa\Research\codes\clean-data\ad_data.csv')
+#df = pd.read_csv(r'C:\Users\johns\OneDrive\Documents\JJE\RS\biogas-upgrading-project\clean-data\ad_data.csv')
 # C:\Users\johns\OneDrive\Documents\JJE\RS\biogas-upgrading-project\clean-data
 # flow_data = df['flow_m3_per_day'].values
 flow_data = df['flow_m3_per_day'].values[0]
 #print(flow_data)
 
-# Calculating biogas generation in kgCH4/hr
-""" Calculates the biogas generation in kgCH4/hr based on flow data. 
-The flow data is in m3/d. The biogas_gen equation used here is from El Abbadi et al., preprint."""
-def cal_biogas_gen(flow_data):
-   biogas_gen = flow_data*0.00148
-   return biogas_gen
 
-biogas_gen = cal_biogas_gen(flow_data)
-#print(biogas_gen)
+def cal_biogas_flow(flow_data): # Calculates biogas flowrate in KgCH4/h
+    biogas_flow = flow_data*0.00148
+    return biogas_flow
 
+def cal_biogas_flow1(biogas_flow,MMBTU_TO_MJ,HHV1): # Calculates biogas flowrate in mmBtu/h
+    biogas_flow1 = biogas_flow * (1/MMBTU_TO_MJ) * HHV1
+    return biogas_flow1
 
-""" To calculate RNG cost which is cited from Parker et al., 2017, RNG flow needs to be calculated in MMBtu/hr.
-With the upgrading technology having an efficiency of 90%, the RNG flow can be calculated 
-as rng_flow = 0.9*biogas production.
- """
+def cal_rng_flow(biogas_flow1): # Calculates RNG flowrate in mmBtu/h
+    rng_flow = 0.9*biogas_flow1
+    return rng_flow
 
-biogas_prod = biogas_gen * 1/MMBTU_TO_MJ * MJ_PER_KG_CH4 #this biogas_prod is in mmBtu/h which is the same as biogas_gen in kgCH4/h
-"""using the biogas generation in kgCH4/hr, the assumption of 1 kg CH4 = 55.6 MJ and the conversion factor of 1 MMBtu = 1,055.06 MJ."""
-#print(biogas_prod)
+def cal_rng_flow1(cf,rng_flow): # Calculates RNG flowrate in mmBtu/yr
+    rng_flow1 = cf * rng_flow
+    return rng_flow1
 
-rng_flow = 0.9*biogas_prod #this is the rng flowrate in mmBtu/h after upgrading
-#print(rng_flow)
+def cal_biogas_upgrade_pipe_cost(rng_flow): # Calculates the capital and O&M cost of upgrading biogas for pipeline injection
+    rng_cost = 1370000*rng_flow**0.56
+    o_m_cost = 101625*rng_flow**0.81
+    return rng_cost, o_m_cost
 
-"""Assuming a membrane technology and a downtime of 3%(Patterson et al., 2011), the membrane technology 
-operates for  8497.2h per year."""
+biogas_flow = cal_biogas_flow(flow_data)
+print("Biogas flowrate(KgCH4/h) = ", biogas_flow)
 
-#Calculating rng_flow1 in mmBtu/yr for membrane technology
-# opt is the technology operating time
-def rng_flow_cal(opt):
- return opt*rng_flow
+biogas_flow1 = cal_biogas_flow1(biogas_flow,MMBTU_TO_MJ,HHV1)
+print("Biogas flowrate(mmBtu/h) = ", biogas_flow1)
 
-rng_flow1 = rng_flow_cal(8497.2)
-#print("RNG flow for membrane technology(mmBtu/yr) = ", rng_flow1)
+rng_flow = cal_rng_flow(biogas_flow1)
+print("RNG flowrate(mmBtu/h) = ", rng_flow)
 
-"""Calculating the capital cost for upgrading biogas for pipeline injection alongside it's annual o&m cost
-using cost relation from Parker etal.,2017"""
+rng_flow1 = cal_rng_flow1(cf,rng_flow)
+print("RNG flowrate(mmBtu/yr) = ", rng_flow1)
 
-# Capital cost of upgrading biogas for pipeline injection is in $
-def biogas_upgrade_pipe(rng_flow):
-   biogas_pipe_upgrade = 1370000*rng_flow**0.56
-   return biogas_pipe_upgrade
-rng_cost = biogas_upgrade_pipe(rng_flow)
-print("Capital cost($) = ", rng_cost)
+rng_cost, o_m_cost = cal_biogas_upgrade_pipe_cost(rng_flow)
+print("Capex($) = ", rng_cost)
+print("Annual O&M Cost($) = ", o_m_cost)
 
-# Annual o&m cost for upgrading biogas for pipeline injection is in $
-def annual_o_m_cost(rng_cost):
-   o_m_cost = 101625*rng_flow**0.81
-   return o_m_cost
-o_m_cost = annual_o_m_cost(rng_cost)
-print("Annual O&M cost($) = ",o_m_cost)
+"""To calculate levelized cost of producing rng in $/mmBtu, an annualized capital and o&m cost in $/mmBtu is required
+      A Capital Recovery Factor(CRF) is needed in annualizing the capital cost. This equation is given by,
+         CRF = WACC/1-(1+WACC)^-t (El Abbadi et al.,2022) 
+            A unit capital cost in $/(mmBtu/yr) is also needed to annualize the capital cost """
 
-"""To calculate levelized cost of producing rng in $/mmBtu, an annualized capital and o&m cost in $/mmBtu is required """
-"""A Capital Recovery Factor(CRF) is needed in annualizing the capital cost. This equation is given by, """
-"""CRF = WACC/1-(1+WACC)^-t (El Abbadi et al.,2022), where: t = Infrastructure Lifetime (years), 
-WACC is the Weighted Average Cost of Capital (WACC). A 10% WACC is assumed. 
-Assuming membrane technology has a 10year lifetime
-A unit capital cost in $/(mmBtu/yr) is also needed to annualize the capital cost """
+def cal_crf(t,wacc): # Calculates CRF for membrane technology
+    crf = wacc/(1-(1+wacc)**-t)
+    return crf
 
+def cal_unit_capex(rng_cost,rng_flow1): # Calculates unit capital cost in $/(mmBtu/yr)
+    uncc = rng_cost/rng_flow1
+    return uncc
 
-# Calculting CRF 
-def crf_cal(t,wacc):
-   return wacc/(1-(1+wacc)**-t)
+def cal_annualized_capex(crf,uncc): # Calculates annualized capital cost in $/mmBtu
+    acc = crf*uncc
+    return acc
 
-crf1 = crf_cal(10,0.1)#crfcal
-print("CRF for membrane technology = ",crf1)
+def cal_annualized_o_m(o_m_cost,rng_flow1): # Calculates annualized O&M cost in $/mmBtu
+    aomc = o_m_cost/rng_flow1
+    return aomc
 
-# Calculating unit capital cost (uncc) for membrane technology
-uncc1 = rng_cost/rng_flow1
-print("Unit Capital Cost for membrane technology($/mmBtu/yr) = ",uncc1)
+crf = cal_crf(t,wacc)
+print("CRF for membrane technology = ",crf)
 
-# Calculating annualized capital cost for membrane technology
-acc1 = crf1*uncc1
-print("Annualized Capital Cost for membrane technology($/mmBtu) = ", acc1)
+uncc = cal_unit_capex(rng_cost,rng_flow1)
+print("Unit Capital Cost for membrane technology($/mmBtu/yr) = ",uncc)
 
-# Calculating annualized O&M cost for membrane technology
-aomc1 = o_m_cost/rng_flow1
-print("Annualized O&M Cost for membrane technology($/mmBtu) = ", aomc1)
+acc = cal_annualized_capex(crf,uncc)
+print("Annualized Capital Cost for membrane technology($/mmBtu) = ", acc)
 
-
-"""                               Energy consumption of technologies                                       
-For membrane technology, it's energy consumption for upgrading biogas is 0.3kWh/m3(Makaruk etal., 2010).
-To calculate the energy used by each facility assuming they all use membrane technology, biogas prodution in kgCH4/h
-needs to be converted to m3/h. Assuming biogas at all facilities is been produced at 25 degrees celcius and 1atm,
-then biogas HHV at these conditions is 55.6MJ/kgCH4 (El Abbadi et al., preprint).
-
-Converting kgCH4/h to m3/h, HHV in MJ/kgCH4 is needed in MJ/m3. The density of CH4 at 25 degrees celcius(298K) and 1atm 
-is required given that molar mass(M) of CH4 is 16g/mol and an ideal gas constant(R) of 0.0821L.atm/mol.K
-"""
-# Calculating the the density of CH4 at 25 degrees celcius(298K) and 1atm using the ideal gas law PV=nRT
-# From the ideal gas law and molar mass of CH4, density(p) of CH4 at these conditions is given by,
-# p = PM/RT
-P = 1 #atm
-T = 298 #K
-R = 0.0821 #L.atm/mol.K
-M = 16 #g/mol
-p = (P*M)/(R*T)
-print("Density of CH4(kg/m3) = ",p)
-
-# Converting HHV in MJ/kgCH4 to MJ/m3
-HHV1 = 55.6 #MJ/KgCH4
-HHV2 = HHV1*p
-print("HHV(MJ/m3) = ", HHV2)
-
-# Calculating biogas production in m3/h
-biogas_gen1 = (biogas_gen*HHV1)/HHV2
-print("Biogas generation(m3/h) = ",biogas_gen1)
-
-# Calculating biogas production in m3/yr for membrane technology
-def biogas_prod_yr(opt,biogas_prod):
-   biogas_prod1 = biogas_prod_yr(8497.2*biogas_prod)
-   return biogas_prod1
-
-
-
-
-print("Biogas production(m3/yr) = ",biogas_prod1)
+aomc = cal_annualized_o_m(o_m_cost,rng_flow1)
+print("Annualized O&M Cost for membrane technology($/mmBtu) = ", aomc)  
