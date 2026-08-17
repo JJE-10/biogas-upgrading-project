@@ -11,6 +11,18 @@ HHV1 = 55.6 # MJ/KgCH4 (El Abbadi, Preprint)
 cf = 8497.2 # Capacity Factor(cf). Assuming membrane technology, this is its capacity factor in hours
 t = 10 # lifetime of membrane technology in years
 wacc = 0.1 # WACC is the Weighted Average Cost of Capital (WACC). A 10% WACC is assumed.
+P = 1 # Pressure(P) atm
+T = 298 # Temperature(T) K
+R = 0.0821 # Ideal gas constant(R) L.atm/mol.K
+M = 16 # Molar mass(M) of CH4 g/mol
+
+# Dictionaries
+membrane = {
+    "cf": 8497.2, # Capacity Factor(cf)
+    "t": 10, # lifetime of membrane technology in years
+    "energy_consumption": 0.3, # kWh/m3(Makaruk etal., 2010)
+    "efficiency": 0.9 
+}
 
 
 
@@ -92,3 +104,22 @@ print("Annualized Capital Cost for membrane technology($/mmBtu) = ", acc)
 
 aomc = cal_annualized_o_m(o_m_cost,rng_flow1)
 print("Annualized O&M Cost for membrane technology($/mmBtu) = ", aomc)  
+
+
+"""Energy consumption of technologies"""
+
+def cal_density(P,M,R,T): # Calculates density(p) of methane at 298K and 1 atm
+    p = (P*M)/(R*T)
+    return P
+
+def cal_HHV(HHV1,p): # Calculates HHV of methane in MJ/m3
+    HHV2 = HHV1*p
+    return HHV2
+
+def cal_biogas_flow2(HHV2,HHV1,biogas_flow): # Calculates biogas flow in m3/h
+    biogas_flow2 = (1/HHV2)*HHV1*biogas_flow
+    return biogas_flow2
+
+
+p = cal_density(P,T,R,M)
+print("Density of CH4(kg/m3) = ",p)
