@@ -27,8 +27,8 @@ membrane = {
 
 
 # Loading flow data in m3/d from ad_data.csv 
-df = pd.read_csv(r'C:\Users\jjohnson316\OneDrive - University of Iowa\Research\codes\clean-data\ad_data.csv')
-#df = pd.read_csv(r'C:\Users\johns\OneDrive\Documents\JJE\RS\biogas-upgrading-project\clean-data\ad_data.csv')
+#df = pd.read_csv(r'C:\Users\jjohnson316\OneDrive - University of Iowa\Research\codes\clean-data\ad_data.csv')
+df = pd.read_csv(r'C:\Users\johns\OneDrive\Documents\JJE\RS\biogas-upgrading-project\clean-data\ad_data.csv')
 # C:\Users\johns\OneDrive\Documents\JJE\RS\biogas-upgrading-project\clean-data
 # flow_data = df['flow_m3_per_day'].values
 flow_data = df['flow_m3_per_day'].values[0]
@@ -44,6 +44,7 @@ def cal_biogas_flow1(biogas_flow,MMBTU_TO_MJ,HHV1): # Calculates biogas flowrate
     return biogas_flow1
 
 def cal_rng_flow(biogas_flow1): # Calculates RNG flowrate in mmBtu/h
+    """Calculates RNG flowrate in mmBtu/h"""
     rng_flow = 0.9*biogas_flow1
     return rng_flow
 
@@ -110,7 +111,7 @@ print("Annualized O&M Cost for membrane technology($/mmBtu) = ", aomc)
 
 def cal_density(P,M,R,T): # Calculates density(p) of methane at 298K and 1 atm
     p = (P*M)/(R*T)
-    return P
+    return p
 
 def cal_HHV(HHV1,p): # Calculates HHV of methane in MJ/m3
     HHV2 = HHV1*p
@@ -121,5 +122,5 @@ def cal_biogas_flow2(HHV2,HHV1,biogas_flow): # Calculates biogas flow in m3/h
     return biogas_flow2
 
 
-p = cal_density(P,T,R,M)
+p = cal_density(P,M,R,T)
 print("Density of CH4(kg/m3) = ",p)
