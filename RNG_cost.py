@@ -28,7 +28,10 @@ membrane = {
 
 # Loading flow data in m3/d from ad_data.csv 
 #df = pd.read_csv(r'C:\Users\jjohnson316\OneDrive - University of Iowa\Research\codes\clean-data\ad_data.csv')
-df = pd.read_csv(r'C:\Users\johns\OneDrive\Documents\JJE\RS\biogas-upgrading-project\clean-data\ad_data.csv')
+# df = pd.read_csv(r'C:\Users\johns\OneDrive\Documents\JJE\RS\biogas-upgrading-project\clean-data\ad_data.csv')
+
+ad_data_path = pathlib.Path("biogas-upgrading-project", "clean_data", "ad_data.csv")
+pd.read_csv
 # C:\Users\johns\OneDrive\Documents\JJE\RS\biogas-upgrading-project\clean-data
 # flow_data = df['flow_m3_per_day'].values
 flow_data = df['flow_m3_per_day'].values[0]
