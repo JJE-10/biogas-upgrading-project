@@ -74,18 +74,50 @@ print(f"Done! Updated {file_path} with reported_capex_usd and reported_capex_usd
 plot_path = Path("clean_data") / "capex_vs_capacity.png"
 plot_path.parent.mkdir(parents=True, exist_ok=True)
 
-fig, ax = plt.subplots(figsize=(8, 6))
+fig, ax = plt.subplots(figsize=(14, 10))
+
+# clean up stray spaces in technology names so "Water scrubbing" and
+# "Water scrubbing " (trailing space) aren't treated as two categories
+df["technology"] = df["technology"].str.strip()
+
+# a high-contrast set of colors, one per technology, so each one is easy
+# to tell apart at a glance
+high_contrast_colors = [
+    "#e6194b", "#3cb44b", "#4363d8", "#f58231", "#911eb4",
+    "#42d4f4", "#f032e6", "#bfef45", "#469990", "#9a6324",
+    "#800000", "#000075", "#a9a9a9",
+]
+technologies = sorted(df["technology"].unique())
+color_for = dict(zip(technologies, high_contrast_colors))
 
 # one color per technology, so patterns by technology are easy to see
 for technology, group in df.groupby("technology"):
-    ax.scatter(group["reported_capacity"], group["reported_capex_usd_2025"], label=technology, alpha=0.7)
+    ax.scatter(
+        group["reported_capacity"],
+        group["reported_capex_usd_2025"],
+        label=technology,
+        color=color_for[technology],
+        s=80,
+        alpha=0.85,
+    )
 
 ax.set_xlabel("Reported capacity (Nm3/hr or m3/hr)")
 ax.set_ylabel("Capex, inflation-adjusted to 2025 (USD)")
 ax.set_title("Capex vs Capacity")
 ax.grid(True, alpha=0.3)
-ax.legend(fontsize=7, loc="upper left", bbox_to_anchor=(1, 1))
+
+# legend goes below the plot
+
+ax.legend(fontsize=10, loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=3)
 fig.tight_layout()
 fig.savefig(plot_path, dpi=150)
 
 print(f"Plot saved to {plot_path}")
+
+# Zoomed-in version: cuts the y-axis at 0.25e8 so lower points are easier to see
+zoomed_plot_path = Path("clean_data") / "capex_vs_capacity_zoomed.png"
+ax.set_ylim(0, 0.25e8)
+ax.set_title("Capex vs Capacity (zoomed in)")
+fig.savefig(zoomed_plot_path, dpi=150)
+
+print(f"Zoomed-in plot saved to {zoomed_plot_path}")
